@@ -21,7 +21,6 @@ tailwind.config = {
 </script>
 
 <style>
-/* Subtle press feedback */
 .pressable {
   transition: all 0.12s ease;
 }
@@ -30,10 +29,9 @@ tailwind.config = {
   opacity: 0.9;
 }
 
-/* Result settle animation */
 @keyframes settle {
-  0% { transform: scale(0.97); opacity: 0.6; }
-  100% { transform: scale(1); opacity: 1; }
+  0% { transform: translateY(2px); opacity: 0.6; }
+  100% { transform: translateY(0); opacity: 1; }
 }
 .settle {
   animation: settle 0.18s ease;
@@ -41,11 +39,11 @@ tailwind.config = {
 </style>
 </head>
 
-<body class="bg-[#fdfcf9] font-sans h-[100dvh] overflow-hidden text-amber-950">
+<body class="bg-[#fbfaf7] font-sans h-[100dvh] overflow-hidden text-amber-950">
 
 <div x-data="bakeConvert()" class="max-w-md mx-auto h-full flex flex-col px-5 py-5">
 
-  <!-- HEADER (quiet) -->
+  <!-- HEADER (quiet but present) -->
   <header class="flex justify-between items-center mb-4">
     <h1 class="text-lg font-semibold tracking-tight opacity-80">BakeConvert</h1>
 
@@ -55,28 +53,13 @@ tailwind.config = {
     </button>
   </header>
 
-  <!-- TABS (minimal) -->
-  <div class="flex justify-center mb-4 text-sm">
-    <button @click="activeTab='single'"
-      :class="activeTab==='single' ? 'opacity-100' : 'opacity-40'"
-      class="px-4 py-1 font-medium pressable">
-      Ingredient
-    </button>
+  <!-- MAIN SURFACE (restored depth) -->
+  <div class="flex-1 flex flex-col justify-between">
 
-    <button @click="activeTab='recipe'"
-      :class="activeTab==='recipe' ? 'opacity-100' : 'opacity-40'"
-      class="px-4 py-1 font-medium pressable">
-      Recipe
-    </button>
-  </div>
+    <!-- INPUT AREA -->
+    <div class="bg-white/60 backdrop-blur rounded-3xl p-4 shadow-sm border border-amber-100">
 
-  <!-- MAIN -->
-  <div x-show="activeTab==='single'" class="flex-1 flex flex-col justify-between">
-
-    <!-- INPUT ZONE -->
-    <div>
-
-      <!-- Ingredient (quiet context) -->
+      <!-- Ingredient -->
       <select x-model="selectedIngredient" @change="updateResult()"
         class="w-full mb-4 text-sm bg-transparent border-b border-amber-200 pb-2 focus:outline-none">
         <template x-for="ing in ingredients" :key="ing.name">
@@ -84,8 +67,8 @@ tailwind.config = {
         </template>
       </select>
 
-      <!-- FROM / TO unified -->
-      <div class="grid grid-cols-2 gap-4">
+      <!-- FROM / TO -->
+      <div class="grid grid-cols-2 gap-5">
 
         <!-- FROM -->
         <div>
@@ -123,7 +106,7 @@ tailwind.config = {
 
       </div>
 
-      <!-- Swap (utility) -->
+      <!-- SWAP -->
       <div class="flex justify-center mt-4">
         <button @click="swapUnits()"
           class="text-xl opacity-50 pressable">
@@ -133,17 +116,17 @@ tailwind.config = {
 
     </div>
 
-    <!-- RESULT (hero) -->
-    <div class="text-center mt-6">
-      <div class="text-5xl font-semibold tracking-tight settle"
-           x-text="resultText || '—'"></div>
+    <!-- RESULT (restored hero status) -->
+    <div class="mt-6 text-center">
+      <div class="text-xs tracking-widest text-amber-600 mb-2 opacity-70">
+        CONVERTS TO
+      </div>
+
+      <div class="text-5xl font-semibold tracking-tight settle">
+        <span x-text="resultText || '—'"></span>
+      </div>
     </div>
 
-  </div>
-
-  <!-- RECIPE -->
-  <div x-show="activeTab==='recipe'" class="flex-1 flex items-center justify-center text-sm opacity-50">
-    Recipe scaling coming soon
   </div>
 
 </div>
@@ -157,8 +140,6 @@ function bakeConvert() {
       { name: "All-Purpose Flour", gPerCup: 120, isLiquid: false },
       { name: "Bread Flour", gPerCup: 120, isLiquid: false },
       { name: "Cake Flour", gPerCup: 113, isLiquid: false },
-      { name: "Whole Wheat Flour", gPerCup: 120, isLiquid: false },
-      { name: "Almond Flour", gPerCup: 96, isLiquid: false },
       { name: "Granulated Sugar", gPerCup: 200, isLiquid: false },
       { name: "Brown Sugar", gPerCup: 213, isLiquid: false },
       { name: "Butter", gPerCup: 227, isLiquid: true },
