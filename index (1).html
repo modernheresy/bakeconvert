@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>BakeConvert</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif']
+      }
+    }
+  }
+}
+</script>
+
+<style>
+/* GEL SURFACE */
+.gel {
+  background: linear-gradient(145deg, #fff7ed, #fde68a);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.7),
+    0 12px 30px rgba(120,53,15,0.08);
+}
+
+/* PRESS FEEDBACK */
+.pressable {
+  transition: all 0.15s ease;
+}
+.pressable:active {
+  transform: scale(0.96);
+  filter: brightness(0.95);
+}
+
+/* RESULT POP */
+@keyframes pop {
+  0% { transform: scale(0.95); opacity: 0.6; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.pop {
+  animation: pop 0.25s ease;
+}
+
+/* ROTATE */
+.rotate {
+  transform: rotate(180deg);
+  transition: transform 0.2s ease;
+}
+</style>
+</head>
+
+<body class="bg-gradient-to-b from-amber-50 to-orange-50 font-sans h-[100dvh] overflow-hidden">
+
+<div x-data="bakeConvert()" class="max-w-md mx-auto h-full flex flex-col px-4 py-4">
+
+  <!-- HEADER -->
+  <header class="flex justify-between items-center mb-3">
+    <div>
+      <h1 class="text-2xl font-bold text-amber-950 leading-tight">BakeConvert</h1>
+      <p class="text-xs text-amber-700">Accurate grams ↔ cups for bakers</p>
+    </div>
+
+    <button @click="installPrompt()"
+      class="px-4 py-2 rounded-2xl text-sm text-white 
+      bg-gradient-to-br from-amber-700 to-amber-900 
+      shadow-md pressable">
+      Install App
+    </button>
+  </header>
+
+  <!-- TABS -->
+  <div class="bg-white rounded-3xl p-1 flex mb-3 shadow">
+    <button @click="activeTab='single'"
+      :class="activeTab==='single' ? 'bg-gradient-to-br from-amber-700 to-amber-900 text-white' : 'text-amber-800'"
+      class="flex-1 py-2 rounded-3xl font-semibold pressable">
+      Ingredient
+    </button>
+
+    <button @click="activeTab='recipe'"
+      :class="activeTab==='recipe' ? 'bg-gradient-to-br from-amber-700 to-amber-900 text-white' : 'text-amber-800'"
+      class="flex-1 py-2 rounded-3xl font-semibold pressable">
+      Recipe
+    </button>
+  </div>
+
+  <!-- MAIN -->
+  <div x-show="activeTab==='single'" class="flex-1 bg-white rounded-[28px] shadow p-4 flex flex-col justify-between">
+
+    <!-- INGREDIENT -->
+    <div>
+      <label class="text-xs font-semibold text-amber-600 tracking-wide">Ingredient</label>
+
+      <select x-model="selectedIngredient" @change="updateResult()"
+        class="w-full mt-1 p-3 rounded-2xl text-base 
+        bg-white/70 backdrop-blur border border-amber-200 
+        focus:outline-none focus:ring-2 focus:ring-amber-300">
+        <template x-for="ing in ingredients" :key="ing.name">
+          <option :value="ing.name" x-text="ing.name"></option>
+        </template>
+      </select>
+
+      <!-- FROM / TO -->
+      <div class="grid grid-cols-2 gap-3 mt-4">
+
+        <!-- FROM -->
+        <div>
+          <div class="text-xs text-amber-600 mb-1">FROM</div>
+
+          <input x-model.number="amount1" @input="updateResult()"
+            type="number" step="0.1"
+            class="w-full p-3 rounded-2xl text-2xl font-bold text-center
+            bg-white/70 border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-300">
+
+          <select x-model="unit1" @change="updateResult()"
+            class="w-full mt-2 p-2 rounded-xl text-sm text-center 
+            bg-white/70 border border-amber-200 pressable">
+            <option value="grams">g</option>
+            <option value="cups">cups</option>
+            <option value="tbsp">tbsp</option>
+            <option value="tsp">tsp</option>
+            <option value="oz">oz</option>
+            <option value="ml">ml</option>
+          </select>
+        </div>
+
+        <!-- TO -->
+        <div>
+          <div class="text-xs text-amber-600 mb-1">TO</div>
+
+          <input x-model.number="amount2" @input="updateResult()"
+            type="number" step="0.1"
+            class="w-full p-3 rounded-2xl text-2xl font-bold text-center
+            bg-white/70 border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-300">
+
+          <select x-model="unit2" @change="updateResult()"
+            class="w-full mt-2 p-2 rounded-xl text-sm text-center 
+            bg-white/70 border border-amber-200 pressable">
+            <option value="grams">g</option>
+            <option value="cups">cups</option>
+            <option value="tbsp">tbsp</option>
+            <option value="tsp">tsp</option>
+            <option value="oz">oz</option>
+            <option value="ml">ml</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- SWAP -->
+      <div class="flex justify-center my-3">
+        <button @click="swapUnits(); $el.classList.add('rotate'); setTimeout(()=> $el.classList.remove('rotate'),200)"
+          class="w-12 h-12 rounded-xl text-xl 
+          bg-gradient-to-br from-amber-100 to-amber-200 
+          text-amber-900 shadow pressable">
+          ↔
+        </button>
+      </div>
+    </div>
+
+    <!-- RESULT -->
+    <div class="gel rounded-2xl p-4 text-center border border-amber-100">
+      <div class="text-xs text-amber-600 tracking-widest mb-1">CONVERTS TO</div>
+      <div class="text-3xl font-bold text-amber-950 pop"
+           x-text="resultText || '—'"></div>
+    </div>
+  </div>
+
+  <!-- RECIPE TAB -->
+  <div x-show="activeTab==='recipe'" class="flex-1 bg-white rounded-3xl shadow flex items-center justify-center">
+    <p class="text-amber-700">Full recipe scaling coming soon</p>
+  </div>
+
+</div>
+
+<script>
+function bakeConvert() {
+  return {
+    activeTab: 'single',
+
+    ingredients: [
+      { name: "All-Purpose Flour", gPerCup: 120, isLiquid: false },
+      { name: "Bread Flour", gPerCup: 120, isLiquid: false },
+      { name: "Cake Flour", gPerCup: 113, isLiquid: false },
+      { name: "Whole Wheat Flour", gPerCup: 120, isLiquid: false },
+      { name: "Almond Flour", gPerCup: 96, isLiquid: false },
+      { name: "Granulated Sugar", gPerCup: 200, isLiquid: false },
+      { name: "Brown Sugar", gPerCup: 213, isLiquid: false },
+      { name: "Butter", gPerCup: 227, isLiquid: true },
+      { name: "Milk", gPerCup: 242, isLiquid: true },
+      { name: "Honey", gPerCup: 336, isLiquid: true }
+    ],
+
+    selectedIngredient: "All-Purpose Flour",
+    amount1: 100,
+    amount2: 0,
+    unit1: "grams",
+    unit2: "cups",
+    resultText: "",
+
+    ML_PER_CUP: 236.6,
+    TBSP_PER_CUP: 16,
+    TSP_PER_CUP: 48,
+    OZ_PER_GRAM: 0.035274,
+
+    init() {
+      this.updateResult();
+    },
+
+    updateResult() {
+      const ing = this.ingredients.find(i => i.name === this.selectedIngredient);
+      if (!ing || !this.amount1 || this.amount1 <= 0) {
+        this.resultText = "—";
+        return;
+      }
+
+      let grams = this.toGrams(this.amount1, this.unit1, ing);
+      let converted = this.fromGrams(grams, this.unit2, ing);
+
+      this.amount2 = Number(converted.toFixed(2));
+      this.resultText = `${this.amount2} ${this.unit2}`;
+    },
+
+    toGrams(amount, unit, ing) {
+      switch(unit){
+        case "grams": return amount;
+        case "cups": return amount * ing.gPerCup;
+        case "tbsp": return amount * (ing.gPerCup / this.TBSP_PER_CUP);
+        case "tsp": return amount * (ing.gPerCup / this.TSP_PER_CUP);
+        case "oz": return amount / this.OZ_PER_GRAM;
+        case "ml": return amount * (ing.gPerCup / this.ML_PER_CUP);
+      }
+    },
+
+    fromGrams(grams, unit, ing) {
+      switch(unit){
+        case "grams": return grams;
+        case "cups": return grams / ing.gPerCup;
+        case "tbsp": return grams / (ing.gPerCup / this.TBSP_PER_CUP);
+        case "tsp": return grams / (ing.gPerCup / this.TSP_PER_CUP);
+        case "oz": return grams * this.OZ_PER_GRAM;
+        case "ml": return grams / (ing.gPerCup / this.ML_PER_CUP);
+      }
+    },
+
+    swapUnits() {
+      [this.unit1, this.unit2] = [this.unit2, this.unit1];
+      [this.amount1, this.amount2] = [this.amount2, this.amount1];
+      this.updateResult();
+    },
+
+    installPrompt() {
+      alert("PWA install prompt here");
+    }
+  }
+}
+</script>
+
+</body>
+</html>
