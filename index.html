@@ -4,213 +4,267 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>BakeConvert</title>
-
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-
-<script>
-tailwind.config = {
-  theme: {
-    extend: {
-      fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif']
-      }
-    }
-  }
-}
-</script>
-
 <style>
-.pressable {
-  transition: all 0.12s ease;
-}
-.pressable:active {
-  transform: scale(0.97);
-  opacity: 0.9;
-}
-
-@keyframes settle {
-  0% { transform: translateY(2px); opacity: 0.6; }
-  100% { transform: translateY(0); opacity: 1; }
-}
-.settle {
-  animation: settle 0.18s ease;
-}
+  .pressable {
+    transition: all 0.12s ease;
+  }
+  .pressable:active {
+    transform: scale(0.98);
+    opacity: 0.85;
+  }
+  @keyframes settle {
+    0% { transform: translateY(3px); opacity: 0.6; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+  .settle {
+    animation: settle 0.18s ease;
+  }
 </style>
 </head>
-
-<body class="bg-[#fbfaf7] font-sans h-[100dvh] overflow-hidden text-amber-950">
-
+<body class="bg-[#fbfaf7] h-[100dvh] overflow-hidden text-amber-950">
 <div x-data="bakeConvert()" class="max-w-md mx-auto h-full flex flex-col px-5 py-5">
-
-  <!-- HEADER (quiet but present) -->
-  <header class="flex justify-between items-center mb-4">
-    <h1 class="text-lg font-semibold tracking-tight opacity-80">BakeConvert</h1>
-
-    <button @click="installPrompt()"
-      class="text-xs px-3 py-1.5 rounded-full bg-amber-100 text-amber-800 pressable">
+  <!-- HEADER -->
+  <header class="flex justify-between items-center mb-6">
+    <h1 class="text-xl font-semibold opacity-90">BakeConvert</h1>
+    <button class="text-xs px-4 py-2 rounded-full bg-amber-100 text-amber-800 pressable font-medium">
       Install
     </button>
   </header>
 
-  <!-- MAIN SURFACE (restored depth) -->
-  <div class="flex-1 flex flex-col justify-between">
-
-    <!-- INPUT AREA -->
-    <div class="bg-white/60 backdrop-blur rounded-3xl p-4 shadow-sm border border-amber-100">
-
-      <!-- Ingredient -->
-      <select x-model="selectedIngredient" @change="updateResult()"
-        class="w-full mb-4 text-sm bg-transparent border-b border-amber-200 pb-2 focus:outline-none">
+  <!-- MAIN -->
+  <div class="flex-1 flex flex-col">
+    <!-- INGREDIENT SELECT -->
+    <div class="bg-white rounded-3xl shadow-sm border border-amber-100 p-5 mb-6">
+      <div class="text-xs text-amber-600 mb-2 tracking-wide font-medium">INGREDIENT</div>
+      <select x-model="selectedIngredient" @change="onIngredientChange()"
+        class="w-full text-lg font-semibold bg-transparent focus:outline-none appearance-none">
         <template x-for="ing in ingredients" :key="ing.name">
           <option :value="ing.name" x-text="ing.name"></option>
         </template>
       </select>
+    </div>
 
-      <!-- FROM / TO -->
-      <div class="grid grid-cols-2 gap-5">
-
+    <!-- CONVERTER CARD -->
+    <div class="bg-white/70 backdrop-blur rounded-3xl p-6 border border-amber-100 flex-1 flex flex-col">
+      <div class="grid grid-cols-2 gap-8 flex-1">
         <!-- FROM -->
-        <div>
-          <input x-model.number="amount1" @input="updateResult()"
-            type="number" step="0.1"
-            class="w-full text-3xl font-semibold bg-transparent focus:outline-none">
+        <div class="flex flex-col items-center">
+          <div class="text-xs text-amber-600 mb-3 tracking-wide font-bold">FROM</div>
+          
+          <div class="flex items-center justify-between w-full bg-amber-50/50 rounded-2xl p-2 border border-amber-100/50">
+            <button 
+              @pointerdown="startAdjustment('from', -1)"
+              @pointerup="stopAdjustment()"
+              @pointerleave="stopAdjustment()"
+              class="w-12 h-12 flex items-center justify-center bg-white rounded-xl shadow-sm text-2xl font-bold text-amber-800 pressable select-none">
+              −
+            </button>
 
-          <select x-model="unit1" @change="updateResult()"
-            class="w-full text-sm mt-1 bg-transparent text-amber-700 focus:outline-none">
-            <option value="grams">grams</option>
-            <option value="cups">cups</option>
-            <option value="tbsp">tbsp</option>
-            <option value="tsp">tsp</option>
-            <option value="oz">oz</option>
-            <option value="ml">ml</option>
-          </select>
+            <div class="flex flex-col items-center flex-1">
+              <input 
+                x-model.number="amount1" 
+                @input="updateResult('from')"
+                type="number"
+                class="w-full text-center text-5xl font-bold bg-transparent focus:outline-none tracking-tighter text-amber-950"
+              >
+              <span class="text-[10px] uppercase font-bold text-amber-400 -mt-1" x-text="unit1"></span>
+            </div>
+
+            <button 
+              @pointerdown="startAdjustment('from', 1)"
+              @pointerup="stopAdjustment()"
+              @pointerleave="stopAdjustment()"
+              class="w-12 h-12 flex items-center justify-center bg-white rounded-xl shadow-sm text-2xl font-bold text-amber-800 pressable select-none">
+              +
+            </button>
+          </div>
         </div>
 
         <!-- TO -->
         <div>
-          <input x-model.number="amount2" @input="updateResult()"
-            type="number" step="0.1"
-            class="w-full text-3xl font-semibold bg-transparent focus:outline-none">
-
-          <select x-model="unit2" @change="updateResult()"
-            class="w-full text-sm mt-1 bg-transparent text-amber-700 focus:outline-none">
-            <option value="grams">grams</option>
-            <option value="cups">cups</option>
-            <option value="tbsp">tbsp</option>
-            <option value="tsp">tsp</option>
-            <option value="oz">oz</option>
-            <option value="ml">ml</option>
-          </select>
+          <div class="text-xs text-amber-600 mb-1 tracking-wide">TO</div>
+          <input x-model.number="amount2" @input="updateResult('to')"
+            type="number" step="0.01" min="0"
+            class="w-full text-4xl font-semibold bg-transparent focus:outline-none tracking-tight">
+          <div class="flex mt-4 gap-1 text-xs">
+            <template x-for="u in units" :key="u">
+              <button @click="unit2 = u; updateResult('to')"
+                :class="{ 'bg-amber-800 text-white': unit2 === u, 'bg-amber-50 text-amber-700': unit2 !== u }"
+                class="flex-1 py-2 rounded-full pressable font-medium">
+                <span x-text="u"></span>
+              </button>
+            </template>
+          </div>
         </div>
-
       </div>
 
-      <!-- SWAP -->
-      <div class="flex justify-center mt-4">
-        <button @click="swapUnits()"
-          class="text-xl opacity-50 pressable">
+      <!-- SWAP BUTTON -->
+      <div class="flex justify-center my-6">
+        <button @click="swapUnits()" 
+          class="w-12 h-12 flex items-center justify-center text-3xl opacity-70 hover:opacity-100 bg-white rounded-2xl shadow-sm border border-amber-100 pressable">
           ↔
         </button>
       </div>
 
-    </div>
-
-    <!-- RESULT (restored hero status) -->
-    <div class="mt-6 text-center">
-      <div class="text-xs tracking-widest text-amber-600 mb-2 opacity-70">
-        CONVERTS TO
-      </div>
-
-      <div class="text-5xl font-semibold tracking-tight settle">
-        <span x-text="resultText || '—'"></span>
+      <!-- RESULT -->
+      <div class="text-center pt-4 border-t border-amber-100">
+        <div class="text-xs text-amber-600 mb-1 tracking-widest">CONVERTS TO</div>
+        <div class="text-5xl font-semibold tracking-tighter text-amber-900 settle" x-text="resultText || '—'"></div>
       </div>
     </div>
-
   </div>
-
 </div>
 
 <script>
 function bakeConvert() {
   return {
-    activeTab: 'single',
-
     ingredients: [
-      { name: "All-Purpose Flour", gPerCup: 120, isLiquid: false },
-      { name: "Bread Flour", gPerCup: 120, isLiquid: false },
-      { name: "Cake Flour", gPerCup: 113, isLiquid: false },
-      { name: "Granulated Sugar", gPerCup: 200, isLiquid: false },
-      { name: "Brown Sugar", gPerCup: 213, isLiquid: false },
-      { name: "Butter", gPerCup: 227, isLiquid: true },
-      { name: "Milk", gPerCup: 242, isLiquid: true },
-      { name: "Honey", gPerCup: 336, isLiquid: true }
+      { name: "All-Purpose Flour", gPerCup: 120, type: "dry" },
+      { name: "Bread Flour", gPerCup: 120, type: "dry" },
+      { name: "Cake Flour", gPerCup: 113, type: "dry" },
+      { name: "Granulated Sugar", gPerCup: 200, type: "dry" },
+      { name: "Brown Sugar (packed)", gPerCup: 213, type: "dry" },
+      { name: "Powdered Sugar", gPerCup: 120, type: "dry" },
+      { name: "Cocoa Powder", gPerCup: 120, type: "dry" },
+      { name: "Rolled Oats", gPerCup: 95, type: "dry" },
+      { name: "Butter", gPerCup: 227, type: "fat" },
+      { name: "Milk", gPerCup: 242, type: "liquid" }
     ],
+
+    units: ["grams", "cups", "tbsp", "tsp", "oz", "ml"],
 
     selectedIngredient: "All-Purpose Flour",
     amount1: 100,
     amount2: 0,
     unit1: "grams",
     unit2: "cups",
+
     resultText: "",
 
+    holdTimer: null,
+    holdInterval: null,
+
+    // Constants
     ML_PER_CUP: 236.6,
     TBSP_PER_CUP: 16,
     TSP_PER_CUP: 48,
     OZ_PER_GRAM: 0.035274,
 
     init() {
-      this.updateResult();
+      this.onIngredientChange();
     },
 
-    updateResult() {
+    onIngredientChange() {
       const ing = this.ingredients.find(i => i.name === this.selectedIngredient);
-      if (!ing || !this.amount1 || this.amount1 <= 0) {
+      if (!ing) return;
+
+      // Smart default units
+      if (ing.type === "liquid") {
+        this.unit1 = "ml";
+        this.unit2 = "cups";
+      } else {
+        this.unit1 = "grams";
+        this.unit2 = "cups";
+      }
+
+      this.updateResult('from');
+    },
+
+    updateResult(source = 'from') {
+      const ing = this.ingredients.find(i => i.name === this.selectedIngredient);
+      if (!ing) return;
+
+      // Prevent invalid input
+      if (source === 'from' && (!this.amount1 || this.amount1 <= 0)) {
+        this.amount2 = 0;
+        this.resultText = "—";
+        return;
+      }
+      if (source === 'to' && (!this.amount2 || this.amount2 <= 0)) {
+        this.amount1 = 0;
         this.resultText = "—";
         return;
       }
 
-      let grams = this.toGrams(this.amount1, this.unit1, ing);
-      let converted = this.fromGrams(grams, this.unit2, ing);
+      let grams = 0;
 
-      this.amount2 = Number(converted.toFixed(2));
+      if (source === 'from') {
+        grams = this.toGrams(this.amount1, this.unit1, ing);
+        const out = this.fromGrams(grams, this.unit2, ing);
+        this.amount2 = this.roundResult(out, this.unit2);
+      } else {
+        grams = this.toGrams(this.amount2, this.unit2, ing);
+        const out = this.fromGrams(grams, this.unit1, ing);
+        this.amount1 = this.roundResult(out, this.unit1);
+      }
+
       this.resultText = `${this.amount2} ${this.unit2}`;
     },
 
+    roundResult(value, unit) {
+      if (unit === "tsp" || unit === "tbsp") return Number(value.toFixed(2));
+      if (unit === "grams" || unit === "ml") return Number(value.toFixed(1));
+      return Number(value.toFixed(2));
+    },
+
     toGrams(amount, unit, ing) {
-      switch(unit){
+      switch(unit) {
         case "grams": return amount;
         case "cups": return amount * ing.gPerCup;
         case "tbsp": return amount * (ing.gPerCup / this.TBSP_PER_CUP);
         case "tsp": return amount * (ing.gPerCup / this.TSP_PER_CUP);
         case "oz": return amount / this.OZ_PER_GRAM;
         case "ml": return amount * (ing.gPerCup / this.ML_PER_CUP);
+        default: return amount;
       }
     },
 
     fromGrams(grams, unit, ing) {
-      switch(unit){
+      switch(unit) {
         case "grams": return grams;
         case "cups": return grams / ing.gPerCup;
         case "tbsp": return grams / (ing.gPerCup / this.TBSP_PER_CUP);
         case "tsp": return grams / (ing.gPerCup / this.TSP_PER_CUP);
         case "oz": return grams * this.OZ_PER_GRAM;
         case "ml": return grams / (ing.gPerCup / this.ML_PER_CUP);
+        default: return grams;
       }
     },
 
     swapUnits() {
       [this.unit1, this.unit2] = [this.unit2, this.unit1];
       [this.amount1, this.amount2] = [this.amount2, this.amount1];
-      this.updateResult();
+      this.updateResult('from'); // Recalculate from the new "from" side
     },
 
-    installPrompt() {
-      alert("PWA install prompt here");
+    startAdjustment(source, direction) {
+      this.adjust(source, direction); // Initial tap
+      
+      // Wait 400ms then start rapid firing
+      this.holdTimer = setTimeout(() => {
+        this.holdInterval = setInterval(() => {
+          // Increase increment speed based on logic if desired
+          this.adjust(source, direction);
+        }, 80); 
+      }, 400);
+    },
+
+    stopAdjustment() {
+      clearTimeout(this.holdTimer);
+      clearInterval(this.holdInterval);
+    },
+
+    adjust(source, direction) {
+      const step = this.unit1 === 'grams' || this.unit1 === 'ml' ? 5 : 0.25;
+      if (source === 'from') {
+        this.amount1 = Math.max(0, this.amount1 + (direction * step));
+        this.updateResult('from');
+      }
     }
   }
 }
 </script>
-
 </body>
 </html>
