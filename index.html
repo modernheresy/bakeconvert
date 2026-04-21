@@ -21,106 +21,81 @@ tailwind.config = {
 </script>
 
 <style>
-/* GEL SURFACE */
-.gel {
-  background: linear-gradient(145deg, #fff7ed, #fde68a);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.7),
-    0 12px 30px rgba(120,53,15,0.08);
-}
-
-/* PRESS FEEDBACK */
+/* Subtle press feedback */
 .pressable {
-  transition: all 0.15s ease;
+  transition: all 0.12s ease;
 }
 .pressable:active {
-  transform: scale(0.96);
-  filter: brightness(0.95);
+  transform: scale(0.97);
+  opacity: 0.9;
 }
 
-/* RESULT POP */
-@keyframes pop {
-  0% { transform: scale(0.95); opacity: 0.6; }
+/* Result settle animation */
+@keyframes settle {
+  0% { transform: scale(0.97); opacity: 0.6; }
   100% { transform: scale(1); opacity: 1; }
 }
-.pop {
-  animation: pop 0.25s ease;
-}
-
-/* ROTATE */
-.rotate {
-  transform: rotate(180deg);
-  transition: transform 0.2s ease;
+.settle {
+  animation: settle 0.18s ease;
 }
 </style>
 </head>
 
-<body class="bg-gradient-to-b from-amber-50 to-orange-50 font-sans h-[100dvh] overflow-hidden">
+<body class="bg-[#fdfcf9] font-sans h-[100dvh] overflow-hidden text-amber-950">
 
-<div x-data="bakeConvert()" class="max-w-md mx-auto h-full flex flex-col px-4 py-4">
+<div x-data="bakeConvert()" class="max-w-md mx-auto h-full flex flex-col px-5 py-5">
 
-  <!-- HEADER -->
-  <header class="flex justify-between items-center mb-3">
-    <div>
-      <h1 class="text-2xl font-bold text-amber-950 leading-tight">BakeConvert</h1>
-      <p class="text-xs text-amber-700">Accurate grams ↔ cups for bakers</p>
-    </div>
+  <!-- HEADER (quiet) -->
+  <header class="flex justify-between items-center mb-4">
+    <h1 class="text-lg font-semibold tracking-tight opacity-80">BakeConvert</h1>
 
     <button @click="installPrompt()"
-      class="px-4 py-2 rounded-2xl text-sm text-white 
-      bg-gradient-to-br from-amber-700 to-amber-900 
-      shadow-md pressable">
-      Install App
+      class="text-xs px-3 py-1.5 rounded-full bg-amber-100 text-amber-800 pressable">
+      Install
     </button>
   </header>
 
-  <!-- TABS -->
-  <div class="bg-white rounded-3xl p-1 flex mb-3 shadow">
+  <!-- TABS (minimal) -->
+  <div class="flex justify-center mb-4 text-sm">
     <button @click="activeTab='single'"
-      :class="activeTab==='single' ? 'bg-gradient-to-br from-amber-700 to-amber-900 text-white' : 'text-amber-800'"
-      class="flex-1 py-2 rounded-3xl font-semibold pressable">
+      :class="activeTab==='single' ? 'opacity-100' : 'opacity-40'"
+      class="px-4 py-1 font-medium pressable">
       Ingredient
     </button>
 
     <button @click="activeTab='recipe'"
-      :class="activeTab==='recipe' ? 'bg-gradient-to-br from-amber-700 to-amber-900 text-white' : 'text-amber-800'"
-      class="flex-1 py-2 rounded-3xl font-semibold pressable">
+      :class="activeTab==='recipe' ? 'opacity-100' : 'opacity-40'"
+      class="px-4 py-1 font-medium pressable">
       Recipe
     </button>
   </div>
 
   <!-- MAIN -->
-  <div x-show="activeTab==='single'" class="flex-1 bg-white rounded-[28px] shadow p-4 flex flex-col justify-between">
+  <div x-show="activeTab==='single'" class="flex-1 flex flex-col justify-between">
 
-    <!-- INGREDIENT -->
+    <!-- INPUT ZONE -->
     <div>
-      <label class="text-xs font-semibold text-amber-600 tracking-wide">Ingredient</label>
 
+      <!-- Ingredient (quiet context) -->
       <select x-model="selectedIngredient" @change="updateResult()"
-        class="w-full mt-1 p-3 rounded-2xl text-base 
-        bg-white/70 backdrop-blur border border-amber-200 
-        focus:outline-none focus:ring-2 focus:ring-amber-300">
+        class="w-full mb-4 text-sm bg-transparent border-b border-amber-200 pb-2 focus:outline-none">
         <template x-for="ing in ingredients" :key="ing.name">
           <option :value="ing.name" x-text="ing.name"></option>
         </template>
       </select>
 
-      <!-- FROM / TO -->
-      <div class="grid grid-cols-2 gap-3 mt-4">
+      <!-- FROM / TO unified -->
+      <div class="grid grid-cols-2 gap-4">
 
         <!-- FROM -->
         <div>
-          <div class="text-xs text-amber-600 mb-1">FROM</div>
-
           <input x-model.number="amount1" @input="updateResult()"
             type="number" step="0.1"
-            class="w-full p-3 rounded-2xl text-2xl font-bold text-center
-            bg-white/70 border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-300">
+            class="w-full text-3xl font-semibold bg-transparent focus:outline-none">
 
           <select x-model="unit1" @change="updateResult()"
-            class="w-full mt-2 p-2 rounded-xl text-sm text-center 
-            bg-white/70 border border-amber-200 pressable">
-            <option value="grams">g</option>
+            class="w-full text-sm mt-1 bg-transparent text-amber-700 focus:outline-none">
+            <option value="grams">grams</option>
             <option value="cups">cups</option>
             <option value="tbsp">tbsp</option>
             <option value="tsp">tsp</option>
@@ -131,17 +106,13 @@ tailwind.config = {
 
         <!-- TO -->
         <div>
-          <div class="text-xs text-amber-600 mb-1">TO</div>
-
           <input x-model.number="amount2" @input="updateResult()"
             type="number" step="0.1"
-            class="w-full p-3 rounded-2xl text-2xl font-bold text-center
-            bg-white/70 border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-300">
+            class="w-full text-3xl font-semibold bg-transparent focus:outline-none">
 
           <select x-model="unit2" @change="updateResult()"
-            class="w-full mt-2 p-2 rounded-xl text-sm text-center 
-            bg-white/70 border border-amber-200 pressable">
-            <option value="grams">g</option>
+            class="w-full text-sm mt-1 bg-transparent text-amber-700 focus:outline-none">
+            <option value="grams">grams</option>
             <option value="cups">cups</option>
             <option value="tbsp">tbsp</option>
             <option value="tsp">tsp</option>
@@ -149,30 +120,30 @@ tailwind.config = {
             <option value="ml">ml</option>
           </select>
         </div>
+
       </div>
 
-      <!-- SWAP -->
-      <div class="flex justify-center my-3">
-        <button @click="swapUnits(); $el.classList.add('rotate'); setTimeout(()=> $el.classList.remove('rotate'),200)"
-          class="w-12 h-12 rounded-xl text-xl 
-          bg-gradient-to-br from-amber-100 to-amber-200 
-          text-amber-900 shadow pressable">
+      <!-- Swap (utility) -->
+      <div class="flex justify-center mt-4">
+        <button @click="swapUnits()"
+          class="text-xl opacity-50 pressable">
           ↔
         </button>
       </div>
+
     </div>
 
-    <!-- RESULT -->
-    <div class="gel rounded-2xl p-4 text-center border border-amber-100">
-      <div class="text-xs text-amber-600 tracking-widest mb-1">CONVERTS TO</div>
-      <div class="text-3xl font-bold text-amber-950 pop"
+    <!-- RESULT (hero) -->
+    <div class="text-center mt-6">
+      <div class="text-5xl font-semibold tracking-tight settle"
            x-text="resultText || '—'"></div>
     </div>
+
   </div>
 
-  <!-- RECIPE TAB -->
-  <div x-show="activeTab==='recipe'" class="flex-1 bg-white rounded-3xl shadow flex items-center justify-center">
-    <p class="text-amber-700">Full recipe scaling coming soon</p>
+  <!-- RECIPE -->
+  <div x-show="activeTab==='recipe'" class="flex-1 flex items-center justify-center text-sm opacity-50">
+    Recipe scaling coming soon
   </div>
 
 </div>
