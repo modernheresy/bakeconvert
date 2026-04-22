@@ -21,98 +21,88 @@
   .settle {
     animation: settle 0.18s ease;
   }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 </style>
 </head>
-<body class="bg-[#fbfaf7] h-[100dvh] overflow-hidden text-amber-950">
-<div x-data="bakeConvert()" class="max-w-md mx-auto h-full flex flex-col px-5 py-5">
-  <!-- HEADER -->
-  <header class="flex justify-between items-center mb-6">
-    <h1 class="text-xl font-semibold opacity-90">BakeConvert</h1>
-    <button class="text-xs px-4 py-2 rounded-full bg-amber-100 text-amber-800 pressable font-medium">
-      Install
-    </button>
+<body class="bg-[#fbfaf7] min-h-[100dvh] text-amber-950 pb-10">
+<div x-data="bakeConvert()" class="max-w-md mx-auto flex flex-col px-6 py-6 space-y-8">
+  
+  <!-- 1. HEADER -->
+  <header class="text-center">
+    <h1 class="text-xl font-black tracking-widest uppercase opacity-40">BakeConvert</h1>
   </header>
 
-  <!-- MAIN -->
-  <div class="flex-1 flex flex-col">
-    <!-- INGREDIENT SELECT -->
-    <div class="bg-white rounded-3xl shadow-sm border border-amber-100 p-5 mb-6">
-      <div class="text-xs text-amber-600 mb-2 tracking-wide font-medium">INGREDIENT</div>
-      <select x-model="selectedIngredient" @change="onIngredientChange()"
-        class="w-full text-lg font-semibold bg-transparent focus:outline-none appearance-none">
-        <template x-for="ing in ingredients" :key="ing.name">
-          <option :value="ing.name" x-text="ing.name"></option>
-        </template>
-      </select>
+  <!-- 2. INGREDIENT CARD -->
+  <div class="bg-white rounded-[2rem] shadow-sm border border-amber-100 p-6">
+    <div class="text-[10px] text-amber-600 mb-2 tracking-[0.2em] font-bold uppercase">Ingredient</div>
+    <select x-model="selectedIngredient" @change="onIngredientChange()"
+      class="w-full text-2xl font-bold bg-transparent focus:outline-none appearance-none text-amber-950 cursor-pointer">
+      <template x-for="ing in ingredients" :key="ing.name">
+        <option :value="ing.name" x-text="ing.name"></option>
+      </template>
+    </select>
+  </div>
+
+  <!-- 3. THE INPUT BOX -->
+  <div class="flex flex-col space-y-4">
+    <!-- Row 1: Stepper -->
+    <div class="flex items-center justify-between bg-white rounded-[2.5rem] p-2 border border-amber-100 shadow-sm">
+      <button @pointerdown="startAdjustment('from', -1)" @pointerup="stopAdjustment()" @pointerleave="stopAdjustment()"
+        class="w-16 h-16 flex items-center justify-center bg-amber-50 rounded-full text-3xl font-bold text-amber-800 pressable select-none">
+        −
+      </button>
+      
+      <div class="flex-1 text-center">
+        <span class="text-7xl font-black tracking-tighter text-amber-950" x-text="amount1"></span>
+      </div>
+
+      <button @pointerdown="startAdjustment('from', 1)" @pointerup="stopAdjustment()" @pointerleave="stopAdjustment()"
+        class="w-16 h-16 flex items-center justify-center bg-amber-50 rounded-full text-3xl font-bold text-amber-800 pressable select-none">
+        +
+      </button>
     </div>
 
-    <!-- CONVERTER CARD -->
-    <div class="bg-white/70 backdrop-blur rounded-3xl p-6 border border-amber-100 flex-1 flex flex-col">
-      <div class="grid grid-cols-2 gap-8 flex-1">
-        <!-- FROM -->
-        <div class="flex flex-col items-center">
-          <div class="text-xs text-amber-600 mb-3 tracking-wide font-bold">FROM</div>
-          
-          <div class="flex items-center justify-between w-full bg-amber-50/50 rounded-2xl p-2 border border-amber-100/50">
-            <button 
-              @pointerdown="startAdjustment('from', -1)"
-              @pointerup="stopAdjustment()"
-              @pointerleave="stopAdjustment()"
-              class="w-12 h-12 flex items-center justify-center bg-white rounded-xl shadow-sm text-2xl font-bold text-amber-800 pressable select-none">
-              −
-            </button>
-
-            <div class="flex flex-col items-center flex-1">
-              <input 
-                x-model.number="amount1" 
-                @input="updateResult('from')"
-                type="number"
-                class="w-full text-center text-5xl font-bold bg-transparent focus:outline-none tracking-tighter text-amber-950"
-              >
-              <span class="text-[10px] uppercase font-bold text-amber-400 -mt-1" x-text="unit1"></span>
-            </div>
-
-            <button 
-              @pointerdown="startAdjustment('from', 1)"
-              @pointerup="stopAdjustment()"
-              @pointerleave="stopAdjustment()"
-              class="w-12 h-12 flex items-center justify-center bg-white rounded-xl shadow-sm text-2xl font-bold text-amber-800 pressable select-none">
-              +
-            </button>
-          </div>
-        </div>
-
-        <!-- TO -->
-        <div>
-          <div class="text-xs text-amber-600 mb-1 tracking-wide">TO</div>
-          <input x-model.number="amount2" @input="updateResult('to')"
-            type="number" step="0.01" min="0"
-            class="w-full text-4xl font-semibold bg-transparent focus:outline-none tracking-tight">
-          <div class="flex mt-4 gap-1 text-xs">
-            <template x-for="u in units" :key="u">
-              <button @click="unit2 = u; updateResult('to')"
-                :class="{ 'bg-amber-800 text-white': unit2 === u, 'bg-amber-50 text-amber-700': unit2 !== u }"
-                class="flex-1 py-2 rounded-full pressable font-medium">
-                <span x-text="u"></span>
-              </button>
-            </template>
-          </div>
-        </div>
-      </div>
-
-      <!-- SWAP BUTTON -->
-      <div class="flex justify-center my-6">
-        <button @click="swapUnits()" 
-          class="w-12 h-12 flex items-center justify-center text-3xl opacity-70 hover:opacity-100 bg-white rounded-2xl shadow-sm border border-amber-100 pressable">
-          ↔
+    <!-- Row 2: Scrolling Pills -->
+    <div class="flex overflow-x-auto gap-2 py-2 no-scrollbar">
+      <template x-for="u in units" :key="u">
+        <button @click="unit1 = u; updateResult('from')"
+          :class="unit1 === u ? 'bg-amber-800 text-white shadow-md' : 'bg-white text-amber-700 border border-amber-100'"
+          class="px-6 py-4 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all pressable whitespace-nowrap min-h-[64px] min-w-[100px]"
+          x-text="u">
         </button>
-      </div>
+      </template>
+    </div>
+  </div>
 
-      <!-- RESULT -->
-      <div class="text-center pt-4 border-t border-amber-100">
-        <div class="text-xs text-amber-600 mb-1 tracking-widest">CONVERTS TO</div>
-        <div class="text-5xl font-semibold tracking-tighter text-amber-900 settle" x-text="resultText || '—'"></div>
-      </div>
+  <!-- 4. THE DIVIDER -->
+  <div class="text-center py-2">
+    <div class="text-amber-300 font-black text-2xl tracking-tighter">↓</div>
+    <div class="text-[10px] font-black text-amber-400 uppercase tracking-[0.3em]">Converts To</div>
+  </div>
+
+  <!-- 5. THE RESULT BOX -->
+  <div class="bg-amber-900 rounded-[3rem] p-8 shadow-2xl flex flex-col items-center text-white space-y-8">
+    <!-- Row 1: Scrolling Pills -->
+    <div class="flex overflow-x-auto gap-2 py-2 no-scrollbar w-full">
+      <template x-for="u in units" :key="u">
+        <button @click="unit2 = u; updateResult('from')"
+          :class="unit2 === u ? 'bg-white text-amber-900' : 'bg-amber-800/50 text-amber-100 border border-amber-700'"
+          class="px-6 py-4 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all pressable whitespace-nowrap min-h-[64px] min-w-[100px]"
+          x-text="u">
+        </button>
+      </template>
+    </div>
+
+    <!-- Row 2: Result Text -->
+    <div class="flex flex-col items-center text-center w-full">
+      <div class="text-8xl font-black tracking-tighter settle leading-none" x-text="amount2 || '0'"></div>
+      <div class="text-amber-400 font-bold uppercase tracking-[0.4em] text-xs mt-4" x-text="unit2"></div>
     </div>
   </div>
 </div>
@@ -245,9 +235,8 @@ function bakeConvert() {
       // Wait 400ms then start rapid firing
       this.holdTimer = setTimeout(() => {
         this.holdInterval = setInterval(() => {
-          // Increase increment speed based on logic if desired
           this.adjust(source, direction);
-        }, 80); 
+        }, 50); 
       }, 400);
     },
 
@@ -257,9 +246,11 @@ function bakeConvert() {
     },
 
     adjust(source, direction) {
-      const step = this.unit1 === 'grams' || this.unit1 === 'ml' ? 5 : 0.25;
+      const isWhole = this.unit1 === 'grams' || this.unit1 === 'ml';
+      const step = isWhole ? 1 : 0.1;
       if (source === 'from') {
-        this.amount1 = Math.max(0, this.amount1 + (direction * step));
+        const newVal = this.amount1 + (direction * step);
+        this.amount1 = Math.max(0, Number(newVal.toFixed(isWhole ? 0 : 1)));
         this.updateResult('from');
       }
     }
